@@ -76,7 +76,7 @@ class BaseModel:
         simulated_prices = returns2prices(self.prices[self.T-1], self.pseudo_returns)
         under_q = int(q * len(simulated_prices))
 
-        level = simulated_prices[simulated_prices[:,-1].argsort()[under_q + 1]][-1]
+        level = np.sort(simulated_prices[:,-1])[under_q + 1]
         p0 = self.prices[self.T-1]
         var = (level - p0) / p0
 
