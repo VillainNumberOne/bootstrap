@@ -39,8 +39,8 @@ class BaseModel:
         self.returns = np.append(self.returns, prices2returns(prices))
         self.T += S
     
-    def simulate(self, steps, trials, T=None, F=0):
-        self.pseudo_returns = np.zeros([trials, steps])
+    def simulate(self, steps, iterations, T=None, F=0):
+        self.pseudo_returns = np.zeros([iterations, steps])
         
     def plot_last_simulation(self, N=10, padding=10, real_price=False, axis='dates'):
         steps = self.pseudo_returns.shape[1]
@@ -88,7 +88,7 @@ class BaseModel:
         var = (level - p0) / p0
         return var, level
     
-    def evaluate(self, F, T, E, S, q, steps, trials, plot_errors=False):
+    def evaluate(self, F, T, E, S, q, steps, iterations, plot_errors=False):
         if E == None:   E = len(self.prices)
         error = 0
         total = 0
@@ -97,7 +97,7 @@ class BaseModel:
             if i == T: self.get_returns(T, F)
             else: self.extend_returns(S)
             
-            self.simulate(steps, trials)
+            self.simulate(steps, iterations)
             _, level = self.VaR(q)
             
             if self.prices[self.T+steps] < level: 
@@ -111,10 +111,10 @@ class RandomSampling(BaseModel):
     def __init__(self, data):
         super().__init__(data)
     
-    def simulate(self, steps, trials, T=None, F=0):
+    def simulate(self, steps, iterations, T=None, F=0):
         if T: self.get_returns(T, F)
         self.pseudo_returns = np.array([
-            np.random.permutation(np.random.choice(self.returns, steps)) for _ in range(trials)
+            np.random.choice(self.returns, steps) for _ in range(iterations)
         ])
         return self.pseudo_returns
             
