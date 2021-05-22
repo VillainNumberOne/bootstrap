@@ -9,15 +9,15 @@ def prices2returns(prices):
 def returns2prices(p0, returns):
     if len(returns.shape) == 1:
         L = returns.shape[0]
-        prices = np.zeros(L+1)
-        prices[0] = p0
+        prices = np.zeros(L)
+        prices[0] = p0 + p0 * returns[0]
 
-        for i in range(L):
+        for i in range(L-1):
             prices[i+1] = prices[i] + prices[i] * returns[i]
     else:
         prices = np.array([returns2prices(p0, r) for r in returns])
     
-    return prices[1:]
+    return prices
         
 class BaseModel:
     def __init__(self, data=None):
