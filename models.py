@@ -21,31 +21,21 @@ def returns2prices(p0, returns):
         
 class BaseModel:
     def __init__(self, data=None):
-        self.prices = data['Close'].to_numpy()
-        self.data = data
-        self.returns = None
-        self.pseudo_returns = None
-        self.T = 0
-        self.date_format = "%Y-%m-%d"
-        self.dates = [datetime.datetime.strptime(date, self.date_format).date() for date in self.data['Date'][:]]
-    
-    def get_returns(self, T, F=0):
-        prices = self.prices[F:T]
-        self.returns = prices2returns(prices)
-        self.T = T
-    
-    def extend_returns(self, S):
-        prices = self.prices[self.T-1:self.T+S]
-        self.returns = np.append(self.returns, prices2returns(prices))
-        self.T += S
+        self.prices =           data['Close'].to_numpy()
+        self.data =             data
+        self.returns =          prices2returns(self.prices)
+        self.pseudo_returns =   None
+        self.T =                0 #T последней проведенной симуляции
+        self.date_format =      r"%Y-%m-%d"
+        self.dates =            [datetime.datetime.strptime(date, self.date_format).date() for date in self.data['Date'][:]]
     
     def simulate(self, steps, iterations, T=None, F=0):
         self.pseudo_returns = np.zeros([iterations, steps])
         
     def plot_last_simulation(self, N=10, padding=10, real_price=False, axis='dates'):
         steps = self.pseudo_returns.shape[1]
+        if steps <= 0:  return
         p0 = self.prices[self.T-1]
-        if steps <= 0: return
         
         plt.figure(figsize=(10,5))
         plt.grid(True)
@@ -58,7 +48,8 @@ class BaseModel:
             axis_real = np.arange(self.T-padding, end)
             axis_simulated = np.arange(self.T-1, self.T+steps)
             
-        simulated_prices = returns2prices(p0, self.pseudo_returns[np.random.randint(self.pseudo_returns.shape[0], size=N), :])
+        random_indices = np.random.choice(self.pseudo_returns.shape[0], N, replace=False)
+        simulated_prices = returns2prices(p0, self.pseudo_returns[random_indices, :])
         
         for sp in simulated_prices:
             sp = np.append(np.array([p0]), sp)
@@ -83,27 +74,32 @@ class BaseModel:
     
     def VaR(self, q):
         simulated_prices = returns2prices(self.prices[self.T-1], self.pseudo_returns)
-        level = simulated_prices[simulated_prices[:,-1].argsort()[int(q * len(simulated_prices)) + 1]][-1]
+        under_q = int(q * len(simulated_prices))
+
+        level = simulated_prices[simulated_prices[:,-1].argsort()[under_q + 1]][-1]
         p0 = self.prices[self.T-1]
         var = (level - p0) / p0
+
         return var, level
     
-    def evaluate(self, F, T, E, S, q, steps, iterations, plot_errors=False):
-        if E == None:   E = len(self.prices)
+    def evaluate(self, start, begin, end, evaluation_step, q, steps, iterations, plot_errors=False, window=False):
+        if end == None:   end = len(self.prices)
         error = 0
         total = 0
+        self.T = begin
         
-        for i in range(T, E-max(steps, S), S):
-            if i == T: self.get_returns(T, F)
-            else: self.extend_returns(S)
-            
-            self.simulate(steps, iterations)
+        for i in range(begin, end-max(steps, evaluation_step), evaluation_step):
+            self.simulate(steps, iterations, F=start, T=begin)
             _, level = self.VaR(q)
-            
+
             if self.prices[self.T+steps] < level: 
                 error += 1
                 if plot_errors: self.plot_last_simulation(50, real_price=True)
+
             total += 1
+            begin += evaluation_step
+            if window: start += evaluation_step
+
             
         return error/total
 
@@ -111,11 +107,12 @@ class RandomSampling(BaseModel):
     def __init__(self, data):
         super().__init__(data)
     
-    def simulate(self, steps, iterations, T=None, F=0):
-        if T: self.get_returns(T, F)
+    def simulate(self, steps, iterations, F=0, T=None):
+        if T == None:   T = len(self.returns)
+        self.T = T
+
         self.pseudo_returns = np.array([
-            np.random.choice(self.returns, steps) for _ in range(iterations)
+            np.random.choice(self.returns[F:self.T], steps) for _ in range(iterations)
         ])
         return self.pseudo_returns
-            
             
