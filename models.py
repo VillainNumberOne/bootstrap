@@ -115,5 +115,4 @@ class RandomSampling(BaseModel):
             np.random.choice(self.returns[F:self.T], steps) for _ in range(iterations)
         ])
         return self.pseudo_returns
-
             
