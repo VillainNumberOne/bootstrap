@@ -182,10 +182,9 @@ class S_BHS(BaseModel):
         if not self.block_size: 
             self.block_size = int(optimal_block_length(r)['stationary'])
 
-        bs = StationaryBootstrapM(samples, self.block_size, r = r)
-
+        bs = StationaryBootstrap(self.block_size, r = r)
         self.pseudo_returns = np.array([
-            bs['r'] for _, bs in bs.bootstrap(iterations)
+            bs['r'][:samples] for _, bs in bs.bootstrap(iterations)
         ])
 
         return self.pseudo_returns

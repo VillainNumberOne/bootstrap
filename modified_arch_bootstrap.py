@@ -33,20 +33,21 @@ class CircularBlockBootstrapM(CircularBlockBootstrap):
         else:
             return indices
 
-class StationaryBootstrapM(StationaryBootstrap):
-    def __init__(self, samples, block_size, *args, **kwargs):
-        super().__init__(block_size, *args, **kwargs)
-        self.set_samples(samples)
+# class StationaryBootstrapM(StationaryBootstrap):
+#     def __init__(self, samples, block_size, *args, **kwargs):
+#         super().__init__(block_size, *args, **kwargs)
+#         self.set_samples(samples)
 
-    def set_samples(self, samples):
-        self._samples = samples    
+#     def set_samples(self, samples):
+#         self._samples = samples    
 
-    def update_indices(self):
-        indices = self.random_state.randint(self._num_items, size=self._samples)
-        indices = indices.astype(np.int64)
-        u = self.random_state.random_sample(self._num_items)
+#     def update_indices(self):
+#         indices = self.random_state.randint(self._num_items, size=self._samples)
+#         indices = indices.astype(np.int64)
+#         u = self.random_state.random_sample(self._num_items)
 
-        return stationary_bootstrap_sample(indices, u, self._p)
+#         indices = stationary_bootstrap_sample(indices, u, self._p)
+#         return indices
 
 
 class MovingBlockBootstrapM(MovingBlockBootstrap):
